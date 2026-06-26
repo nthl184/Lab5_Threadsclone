@@ -16,7 +16,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.LazyRow
 
 import androidx.compose.material3.*
 
@@ -48,16 +47,24 @@ private enum class AppPage {
 @Composable
 fun ThreadsApp(viewModel: MainViewModel) {
     val currentUser by viewModel.currentUser.collectAsState()
-    var isCheckingSession by remember { mutableStateOf(true) }
-    LaunchedEffect(Unit) {
-        if (viewModel.isLoggedIn) {
-            viewModel.loadCurrentUser()
+    val newNotif by viewModel.newNotification.collectAsState() // Khai báo lắng nghe
+    val context = LocalContext.current
+
+    // Bắt sự kiện có thông báo mới và gọi hàm showLocalNotification
+    LaunchedEffect(newNotif) {
+        newNotif?.let { notif ->
+            showLocalNotification(
+                context = context,
+                title = "Threads Clone",
+                body = notif.message,
+                postId = notif.postId
+            )
+            viewModel.markNotificationRead(notif.id)
+            viewModel.clearNotification() // Xóa cache sau khi đã show
         }
-        isCheckingSession = false
     }
-    if (isCheckingSession) {
-        // để trống ở đây
-    } else if (currentUser == null) {
+
+    if (currentUser == null) {
         AuthScreen(vm = viewModel)
     } else {
         HomeScreen(vm = viewModel)
@@ -446,7 +453,7 @@ private fun ComposeBox(
 
         if (selectedImages.isNotEmpty()) {
             Row(modifier = Modifier.fillMaxWidth()) {
-                selectedImages.take(n = LazyRow).forEach { uri ->
+                selectedImages.take(n = 5).forEach { uri ->
                     AsyncImage(
                         model = uri,
                         contentDescription = "Selected image",
