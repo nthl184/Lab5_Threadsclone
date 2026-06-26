@@ -16,6 +16,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyRow
 
 import androidx.compose.material3.*
 
@@ -47,8 +48,16 @@ private enum class AppPage {
 @Composable
 fun ThreadsApp(viewModel: MainViewModel) {
     val currentUser by viewModel.currentUser.collectAsState()
-
-    if (currentUser == null) {
+    var isCheckingSession by remember { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        if (viewModel.isLoggedIn) {
+            viewModel.loadCurrentUser()
+        }
+        isCheckingSession = false
+    }
+    if (isCheckingSession) {
+        // để trống ở đây
+    } else if (currentUser == null) {
         AuthScreen(vm = viewModel)
     } else {
         HomeScreen(vm = viewModel)
@@ -437,7 +446,7 @@ private fun ComposeBox(
 
         if (selectedImages.isNotEmpty()) {
             Row(modifier = Modifier.fillMaxWidth()) {
-                selectedImages.take(3).forEach { uri ->
+                selectedImages.take(n = LazyRow).forEach { uri ->
                     AsyncImage(
                         model = uri,
                         contentDescription = "Selected image",
